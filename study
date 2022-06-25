@@ -16,9 +16,6 @@ from io import StringIO
 
 _VERSION_ = '1.0'
 
-compif = re_compile(r'[^\w \-]')
-tsize_ = None
-
 args_csv="""flags,nargs,action,help,dest,default
 -F,1,,[filter] filter (n: new; p: previously asked; h: hidden; a: all),filter,0
 -M,1,,[filter] mode (o: ordered; r: random; e: exact answers; E: exact answers if simple; r: review (scores are not stored); u: unforgiving; c: case-sensitive),mode,0
@@ -88,7 +85,7 @@ def backup(df):
     sys.exit()
 
 
-def printQ(val):
+def printQ(val, df, args, i, tsize_):
     prescrs = wrap(f"{val['def']}", tsize_ - 30)
     prescr = pc("\n".join(prescrs), "yellow")
     indicator = "⬤"
@@ -118,6 +115,7 @@ def printQ(val):
 
 
 def compare(i, j, exact=False, exactif=False):
+    compif = re_compile(r'[^\w \-]')
     if exact:
         return i == j
     elif exactif and not compif.search(j):
@@ -187,6 +185,7 @@ def filter(df, args):
 
 
 def main():
+    tsize_ = None
     warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
     db = '~/.config/study_cli/db.csv'
@@ -272,7 +271,7 @@ def main():
         if not tsize_:
             tsize_ = tsize().columns
 
-        ques = printQ(val)
+        ques = printQ(val, df, args, i, tsize_)
 
         wrong = True
         while wrong:
