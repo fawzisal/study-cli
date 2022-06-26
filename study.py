@@ -13,10 +13,9 @@ import unidecode
 from io import StringIO
 
 
-
 _VERSION_ = '1.0'
 
-args_csv="""flags,nargs,action,help,dest,default
+args_csv = """flags,nargs,action,help,dest,default
 -F,1,,[filter] filter (n: new; p: previously asked; h: hidden; a: all),filter,0
 -M,1,,[filter] mode (o: ordered; r: random; e: exact answers; E: exact answers if simple; r: review (scores are not stored); u: unforgiving; c: case-sensitive),mode,0
 -t,?,,[filter] only include items matching tags,tags,False
@@ -32,6 +31,7 @@ args_csv="""flags,nargs,action,help,dest,default
 -d,,store_true,[debug ] debug mode,debug,False
 -b,,store_true,[debug ] backup database,bk,False
 -L,1,,[debug ] list (t: terms; i: information; c: information in csv format; T: tags; s: detailed statistics) & exit,list,0"""
+
 
 def calc_info(df):
     n_q = df.shape[0]
@@ -53,7 +53,7 @@ def calc_info(df):
 
 def print_info(r, compact=False):
     if compact:
-        print(f"{dft['tags'].iloc[0][:4]},"
+        print(f"{r['tags'].iloc[0][:4]},"
               + f"{r['n_q']},{r['n_a']},{r['n_qa']},{r['n_qaq']},{r['n_c']},"
               + f"{r['n_qc']},{r['n_qcq']},{r['p_a']},{r['p_c']},{r['n_qca']}")
     else:
@@ -70,7 +70,7 @@ def backup(df):
     from distutils import file_util
     from datetime import datetime
     import sys
-    base = "~/.config/study"
+    base = "~/.config/study-cli"
     tday = datetime.now().strftime('%y%m%d_%H')
     file_util.copy_file(f"{base}/db.csv", f"{base}/bk_{tday}.csv")
     s_columns = ["n_q", "n_e", "n_qa", "n_qc", "n_a", "n_c",
@@ -184,12 +184,17 @@ def filter(df, args):
     return df
 
 
+def fileExists(path):
+    return os.path.exists(os.path.expanduser(path))
+
+
 def main():
     tsize_ = None
     warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
+    db_cols = ["def", "enabled", "id", "last_asked", "n_asked", "n_correct", "tags", "term"]
 
-    db = '~/.config/study_cli/db.csv'
-    jnew = '~/.config/study_cli/new.json'
+    db_path = '~/.config/study-cli/db.csv'
+    jnew_path = '~/.config/study-cli/new.json'
 
     argsDF = pd.read_csv(StringIO(args_csv), index_col=0)
     parser = argparse.ArgumentParser(description='Study some more...')
@@ -205,13 +210,17 @@ def main():
     if args.debug:
         print(args)
 
-    df = pd.read_csv(db, index_col=0)
+    if ~fileExists(db_path):
+        pd.DataFrame(columns=db_cols).to_csv(db_path)
+    df = pd.read_csv(db_path, index_col=0)
     df['last_asked'] = df['last_asked'].astype('datetime64')
 
     # ### ADDING NEW TERMS ### #
     # in the new.json file
     if args.new_terms:
-        df0 = pd.read_json(jnew)
+        if ~fileExists(jnew_path):
+            print(f'Error: file not found at {jnew_path}')
+        df0 = pd.read_json(jnew_path)
         df0 = df0[~df0['def'].isin(df['def'])]
         df = df.append(df0, ignore_index=True, sort=False)
 
@@ -345,6 +354,7 @@ def main():
 
     dfo.loc[df.index] = df.loc[df.index]
     dfo.to_csv(db)
+
 
 if __name__ == '__main__':
     main()
