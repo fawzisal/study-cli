@@ -18,10 +18,10 @@ _VERSION_ = '1.0'
 args_csv = """flags,nargs,action,help,dest,default
 -F,1,,[filter] filter (n: new; p: previously asked; h: hidden; a: all),filter,0
 -M,1,,[filter] mode (o: ordered; r: random; e: exact answers; E: exact answers if simple; r: review (scores are not stored); u: unforgiving; c: case-sensitive),mode,0
--t,?,,[filter] only include items matching tags,tags,False
--a,1,,[filter] asked before # times,asked,0
--c,1,,[filter] correct before,correct,0
--s,1,,[filter] score [0-10],score,0
+-t,?,,[filter] only include items matching tag,tags,False
+-a,1,,[filter] exclude asked before # times,asked,0
+-c,1,,[filter] exclude correct before,correct,0
+-s,1,,[filter] exclude score [0-10],score,0
 -o,1,,[filter] young (<= x days old),young,0
 -O,1,,[filter] old (> x days old),old,0
 -m,1,,[filter] maximum number of questions to ask,n_max,0
@@ -30,7 +30,7 @@ args_csv = """flags,nargs,action,help,dest,default
 -N,2,,[add   ] term [x] with definition [y],new_term,0
 -d,,store_true,[debug ] debug mode,debug,False
 -b,,store_true,[debug ] backup database,bk,False
--L,1,,[debug ] list (t: terms; i: information; c: information in csv format; T: tags; s: detailed statistics) & exit,list,0"""
+-L,1,,[debug ] list & exist (t: terms; i: information; c: information in csv format; T: tags; s: detailed statistics),list,0"""
 
 
 def calc_info(df):
@@ -210,9 +210,16 @@ def main():
     if args.debug:
         print(args)
 
-    if ~fileExists(db_path):
+    if not fileExists(db_path):
+        print(f'creating database at {db_path}. Add terms to study')
         pd.DataFrame(columns=db_cols).to_csv(db_path)
+        exit()
+
     df = pd.read_csv(db_path, index_col=0)
+    if len(df) == 0:
+        print(f'Add terms to study...')
+        exit()
+
     df['last_asked'] = df['last_asked'].astype('datetime64')
 
     # ### ADDING NEW TERMS ### #
@@ -353,7 +360,7 @@ def main():
         i = i + 1
 
     dfo.loc[df.index] = df.loc[df.index]
-    dfo.to_csv(db)
+    dfo.to_csv(db_path)
 
 
 if __name__ == '__main__':

@@ -252,7 +252,9 @@ def main():
         # df = pd.concat([df, dfn], sort=False)
         df = df.append(dfn, ignore_index=True)
         df = df.drop_duplicates(subset=['term', 'def', 'tags'])
-        # df.to_csv(db)
+        df.to_csv(db_path)
+        print(f'added new terms to {db_path}')
+        exit()
 
     # just backup the current db
     if args.bk:
