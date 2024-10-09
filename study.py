@@ -5,7 +5,7 @@ import pandas as pd
 from termcolor import colored as pc
 import warnings
 from os import get_terminal_size as tsize
-from pandas.core.common import SettingWithCopyWarning
+from pandas.errors import SettingWithCopyWarning
 from textwrap import wrap
 import os
 from re import compile as re_compile
@@ -220,7 +220,7 @@ def main():
         print(f'Add terms to study...')
         exit()
 
-    df['last_asked'] = df['last_asked'].astype('datetime64')
+    df['last_asked'] = df['last_asked'].astype('datetime64[ns]')
 
     # ### ADDING NEW TERMS ### #
     # in the new.json file
